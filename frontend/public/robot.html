@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simulador de Robot - Movimientos DSL</title>
+    <style>
+        * {
+            user-select: none;
+        }
+        body {
+            background: #0a0f1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        .simulator-container {
+            background: #1e2a3a;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+        h2 {
+            color: #ffd966;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        canvas {
+            background: #2a3a2a;
+            border-radius: 1.5rem;
+            box-shadow: 0 0 0 3px #ffd966, inset 0 0 0 2px #5a7a5a;
+            cursor: crosshair;
+            margin: 10px 0;
+            width: 100%;
+            height: auto;
+        }
+        .info-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            background: #0f1722;
+            border-radius: 1.5rem;
+            padding: 0.8rem 1.2rem;
+            margin: 10px 0;
+            color: #ffd966;
+            font-weight: bold;
+        }
+        .info-panel div {
+            background: #00000055;
+            padding: 5px 10px;
+            border-radius: 2rem;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        button {
+            background: #ff9800;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        button:hover {
+            background: #ffb74d;
+            transform: scale(1.02);
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #0f1722;
+            padding: 5px 15px;
+            border-radius: 40px;
+        }
+        input[type="range"] {
+            width: 180px;
+        }
+        .instruction-list {
+            background: #0b1018;
+            border-radius: 1rem;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+        .current-instruction {
+            background: #ffd966;
+            color: #1e2a3a;
+            font-weight: bold;
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        .status {
+            font-size: 0.9rem;
+            background: #00000077;
+            border-radius: 20px;
+            padding: 4px 12px;
+        }
+        footer {
+            font-size: 0.7rem;
+            margin-top: 15px;
+            color: #7a8aa0;
+        }
+        @media (max-width: 700px) {
+            .simulator-container { padding: 1rem; }
+            .info-panel { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="simulator-container">
+    <h2>🤖 Simulación Avanzada de Movimiento</h2>
+    <canvas id="robotCanvas" width="700" height="700" style="width:100%; height:auto; max-width:700px; aspect-ratio:1/1"></canvas>
+    
+    <div class="info-panel">
+        <div>📍 Posición: (<span id="posX">300</span>, <span id="posY">300</span>)</div>
+        <div>🧭 Orientación: <span id="angle">0</span>°</div>
+        <div>⚡ Velocidad: <span id="speedValue">500</span> ms/paso</div>
+        <div>📜 Instrucción: <span id="currentInstr" class="current-instruction">-</span></div>
+        <div class="status" id="simStatus">● Listo</div>
+    </div>
+
+    <div class="controls">
+        <button id="pauseResumeBtn">⏸️ Pausa</button>
+        <button id="resetSimBtn">🔄 Reiniciar simulación</button>
+        <div class="slider-container">
+            <span>🐢</span>
+            <input type="range" id="speedSlider" min="100" max="1200" step="10" value="500">
+            <span>🐇</span>
+        </div>
+    </div>
+
+    <div class="instruction-list" id="instructionList">
+        <div>Cargando movimientos...</div>
+    </div>
+    <footer>Movimientos obtenidos del análisis léxico (sessionStorage).</footer>
+</div>
+
+<script>
+    (function(){
+        // ----- Obtener movimientos almacenados -----
+        let moves = [];
+        try {
+            const stored = sessionStorage.getItem('robotMoves');
+            if (stored && stored !== 'undefined') {
+                moves = JSON.parse(stored);
+            } else {
+                moves = [];
+            }
+        } catch(e) { moves = []; }
+
+        // ----- Elementos DOM -----
+        const canvas = document.getElementById('robotCanvas');
+        const ctx = canvas.getContext('2d');
+        const posXSpan = document.getElementById('posX');
+        const posYSpan = document.getElementById('posY');
+        const angleSpan = document.getElementById('angle');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValueSpan = document.getElementById('speedValue');
+        const currentInstrSpan = document.getElementById('currentInstr');
+        const simStatusSpan = document.getElementById('simStatus');
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        const resetSimBtn = document.getElementById('resetSimBtn');
+        const instructionListDiv = document.getElementById('instructionList');
+
+        // ----- Variables de simulación -----
+        let x = 350, y = 350;      // centro del canvas (700/2)
+        let angleDeg = 0;          // 0 = derecha (este)
+        let stepScale = 2.2;       // píxeles por unidad de distancia (ajustado a 700px canvas)
+        let currentMoveIndex = 0;
+        let isPaused = false;
+        let isRunning = false;
+        let animationTimeout = null;
+        let speedMs = 500;          // ms entre movimientos
+
+        // Límites del área (márgenes para que el robot no se salga)
+        const margin = 30;
+        const minX = margin;
+        const maxX = canvas.width - margin;
+        const minY = margin;
+        const maxY = canvas.height - margin;
+
+        // ----- Funciones de dibujo (robot mejorado) -----
+        function drawRobot() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Dibujar cuadrícula más visible
+            ctx.strokeStyle = '#5a7a5a';
+            ctx.lineWidth = 1;
+            const stepGrid = 50;
+            for (let i = 0; i <= canvas.width; i += stepGrid) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            // Centro de coordenadas opcional
+            ctx.fillStyle = '#88aa88';
+            ctx.font = '10px monospace';
+            ctx.fillText("0,0", 10, 20);
+
+            // Dibujar robot estilo "tank"
+            const rad = angleDeg * Math.PI/180;
+            const radius = 18;
+            const cx = x, cy = y;
+            
+            // Cuerpo principal (óvalo)
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(rad);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, radius, radius*0.9, 0, 0, 2*Math.PI);
+            ctx.fillStyle = '#4a7a9c';
+            ctx.fill();
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // Orugas
+            ctx.fillStyle = '#3a5a6a';
+            ctx.fillRect(-radius-4, -radius*0.6, 8, radius*1.2);
+            ctx.fillRect(radius-4, -radius*0.6, 8, radius*1.2);
+            // Cañón / antena
+            ctx.beginPath();
+            ctx.moveTo(radius+2, -3);
+            ctx.lineTo(radius+12, 0);
+            ctx.lineTo(radius+2, 3);
+            ctx.fillStyle = '#c97e3a';
+            ctx.fill();
+            // Ojos
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(radius*0.7, -radius*0.5, 4, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(radius*0.7, -radius*0.5, 2, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.restore();
+
+            // Flecha indicadora de dirección (externa)
+            const arrowLen = 28;
+            const arrowX = x + Math.cos(rad) * (radius+6);
+            const arrowY = y + Math.sin(rad) * (radius+6);
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowY);
+            ctx.lineTo(arrowX - 8*Math.cos(rad - Math.PI/3), arrowY - 8*Math.sin(rad - Math.PI/3));
+            ctx.lineTo(arrowX - 8*Math.cos(rad + Math.PI/3), arrowY - 8*Math.sin(rad + Math.PI/3));
+            ctx.fillStyle = '#ffaa33';
+            ctx.fill();
+            
+            // Mostrar coordenadas cerca del robot
+            ctx.font = 'bold 12px monospace';
+            ctx.fillStyle = '#ffdd99';
+            ctx.shadowBlur = 0;
+            ctx.fillText(`(${Math.round(x)},${Math.round(y)})`, x+12, y-12);
+            ctx.fillStyle = '#ffaa55';
+            ctx.fillText(`${angleDeg}°`, x+12, y-24);
+        }
+
+        // ----- Actualizar UI de posición y ángulo -----
+        function updateUI() {
+            posXSpan.textContent = Math.round(x);
+            posYSpan.textContent = Math.round(y);
+            angleSpan.textContent = angleDeg;
+        }
+
+        // ----- Validar movimiento y ejecutar un paso -----
+        function executeMove(move, index) {
+            if (!move) return false;
+            let newX = x, newY = y, newAngle = angleDeg;
+            const value = move.value;
+            const action = move.action;
+            let valid = true;
+
+            if (action === 'AVANZAR') {
+                const dx = Math.cos(angleDeg * Math.PI/180) * value * stepScale;
+                const dy = Math.sin(angleDeg * Math.PI/180) * value * stepScale;
+                newX = x + dx;
+                newY = y + dy;
+                if (newX < minX || newX > maxX || newY < minY || newY > maxY) valid = false;
+            } 
+            else if (action === 'RETROCEDER') {
+                const dx = Math.cos(angleDeg * Math.PI/180) * value * stepScale;
+                const dy = Math.sin(angleDeg * Math.PI/180) * value * stepScale;
+                newX = x - dx;
+                newY = y - dy;
+                if (newX < minX || newX > maxX || newY < minY || newY > maxY) valid = false;
+            }
+            else if (action === 'GIRAR_DERECHA') {
+                newAngle = (angleDeg + value) % 360;
+                if (newAngle < 0) newAngle += 360;
+            }
+            else if (action === 'GIRAR_IZQUIERDA') {
+                newAngle = (angleDeg - value) % 360;
+                if (newAngle < 0) newAngle += 360;
+            }
+            else {
+                valid = false;
+            }
+
+            if (!valid) {
+                simStatusSpan.innerHTML = '❌ Movimiento inválido (fuera de límites o comando desconocido)';
+                return false;
+            }
+
+            // Aplicar cambios
+            x = newX;
+            y = newY;
+            angleDeg = newAngle;
+            updateUI();
+            drawRobot();
+            return true;
+        }
+
+        // ----- Paso de simulación (llamado recursivo con timeout) -----
+        function stepSimulation() {
+            if (!isRunning || isPaused) return;
+            if (currentMoveIndex >= moves.length) {
+                // Simulación terminada
+                isRunning = false;
+                simStatusSpan.innerHTML = '✅ Simulación completada';
+                pauseResumeBtn.textContent = '▶️ Iniciar';
+                currentInstrSpan.textContent = 'Fin';
+                return;
+            }
+            const move = moves[currentMoveIndex];
+            currentInstrSpan.textContent = `${move.action} ${move.value}`;
+            simStatusSpan.innerHTML = `▶️ Ejecutando ${currentMoveIndex+1}/${moves.length}`;
+            
+            const success = executeMove(move, currentMoveIndex);
+            if (!success) {
+                isRunning = false;
+                simStatusSpan.innerHTML = '⚠️ Simulación detenida por error';
+                pauseResumeBtn.textContent = '▶️ Iniciar';
+                return;
+            }
+            currentMoveIndex++;
+            // Resaltar instrucción actual en la lista
+            highlightCurrentInstruction(currentMoveIndex-1);
+            // Programar siguiente paso
+            animationTimeout = setTimeout(() => { stepSimulation(); }, speedMs);
+        }
+
+        // ----- Resaltar instrucción en la lista -----
+        function highlightCurrentInstruction(index) {
+            const items = document.querySelectorAll('.list-item');
+            items.forEach((item, i) => {
+                if (i === index) item.style.backgroundColor = '#ffd966';
+                else item.style.backgroundColor = 'transparent';
+            });
+            // auto-scroll
+            if (items[index]) items[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ----- Cargar lista de instrucciones en el panel lateral -----
+        function renderInstructionList() {
+            if (!moves.length) {
+                instructionListDiv.innerHTML = '<div>⚠️ No hay movimientos almacenados. Compila instrucciones primero.</div>';
+                return;
+            }
+            let html = '<div style="font-weight:bold; margin-bottom:5px;">📜 Instrucciones cargadas:</div>';
+            moves.forEach((move, idx) => {
+                html += `<div class="list-item" style="padding:4px 8px; border-radius:12px; margin:2px 0;">${idx+1}. ${move.action} ${move.value}</div>`;
+            });
+            instructionListDiv.innerHTML = html;
+        }
+
+        // ----- Iniciar o reanudar simulación -----
+        function startSimulation(reset = false) {
+            if (reset) {
+                // Reiniciar posición y ángulo iniciales
+                x = canvas.width/2;
+                y = canvas.height/2;
+                angleDeg = 0;
+                currentMoveIndex = 0;
+                updateUI();
+                drawRobot();
+                if (animationTimeout) clearTimeout(animationTimeout);
+                isRunning = false;
+                isPaused = false;
+                pauseResumeBtn.textContent = '▶️ Iniciar';
+                simStatusSpan.innerHTML = '🔄 Reiniciado. Presiona Iniciar.';
+                currentInstrSpan.textContent = '-';
+                highlightCurrentInstruction(-1);
+                return;
+            }
+            if (isRunning && !isPaused) return; // ya corriendo
+            if (isPaused) {
+                // Reanudar
+                isPaused = false;
+                pauseResumeBtn.textContent = '⏸️ Pausa';
+                simStatusSpan.innerHTML = '▶️ Reanudado';
+                stepSimulation();
+                return;
+            }
+            if (!isRunning && currentMoveIndex >= moves.length && moves.length>0) {
+                // si ya terminó, se reinicia automáticamente al darle start sin reset manual? mejor pedir reset
+                simStatusSpan.innerHTML = '⚠️ Simulación ya completada. Usa Reiniciar.';
+                return;
+            }
+            if (!isRunning && moves.length === 0) {
+                simStatusSpan.innerHTML = '⚠️ No hay movimientos. Compila instrucciones.';
+                return;
+            }
+            // Iniciar desde donde estaba
+            isRunning = true;
+            isPaused = false;
+            pauseResumeBtn.textContent = '⏸️ Pausa';
+            simStatusSpan.innerHTML = '🎬 Iniciando simulación...';
+            stepSimulation();
+        }
+
+        function pauseSimulation() {
+            if (!isRunning) return;
+            if (isPaused) return;
+            isPaused = true;
+            if (animationTimeout) clearTimeout(animationTimeout);
+            pauseResumeBtn.textContent = '▶️ Reanudar';
+            simStatusSpan.innerHTML = '⏸ Pausado';
+        }
+
+        function resetSimulation() {
+            if (animationTimeout) clearTimeout(animationTimeout);
+            isRunning = false;
+            isPaused = false;
+            currentMoveIndex = 0;
+            x = canvas.width/2;
+            y = canvas.height/2;
+            angleDeg = 0;
+            updateUI();
+            drawRobot();
+            pauseResumeBtn.textContent = '▶️ Iniciar';
+            simStatusSpan.innerHTML = '🔄 Reiniciado. Presiona Iniciar.';
+            currentInstrSpan.textContent = '-';
+            highlightCurrentInstruction(-1);
+        }
+
+        // ----- Eventos -----
+        pauseResumeBtn.addEventListener('click', () => {
+            if (isRunning && !isPaused) pauseSimulation();
+            else if (isRunning && isPaused) startSimulation(false);
+            else startSimulation(false);
+        });
+        resetSimBtn.addEventListener('click', () => {
+            resetSimulation();
+        });
+        speedSlider.addEventListener('input', (e) => {
+            speedMs = parseInt(e.target.value);
+            speedValueSpan.textContent = speedMs;
+        });
+
+        // ----- Inicializar -----
+        function init() {
+            renderInstructionList();
+            if (moves.length === 0) {
+                simStatusSpan.innerHTML = '⚠️ No hay movimientos. Compila instrucciones en la página principal.';
+                pauseResumeBtn.disabled = true;
+                resetSimBtn.disabled = false;
+            } else {
+                pauseResumeBtn.disabled = false;
+                simStatusSpan.innerHTML = '✅ Listo. Presiona Iniciar.';
+            }
+            x = canvas.width/2;
+            y = canvas.height/2;
+            angleDeg = 0;
+            updateUI();
+            drawRobot();
+            isRunning = false;
+            isPaused = false;
+            currentMoveIndex = 0;
+            highlightCurrentInstruction(-1);
+        }
+        init();
+    })();
+</script>
+</body>
+</html>

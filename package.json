@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Masv93/DISE-O-DE-UN-COMPILADOR-DE-LENGUAJE-DSL-PARA-CONTROL-ROB-TICO-EN-ESP32-USANDO-C-#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1"
   },
   "devDependencies": {

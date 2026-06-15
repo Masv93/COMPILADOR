@@ -1,0 +1,259 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #e9ecef;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1300px;
+    margin: auto;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    padding: 20px 30px;
+}
+
+/* HEADER MEJORADO */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.logo-img, .brazo-img {
+    width: 100px;          /* Tamaño más proporcionado */
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
+}
+
+header h1 {
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #1e466e, #3a7ca5);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    letter-spacing: -0.3px;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    margin: 0;
+    text-align: center;
+    flex: 1;
+}
+
+/* Línea dorada decorativa debajo del header */
+header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ffd966, #ffd966, transparent);
+    border-radius: 2px;
+}
+
+/* Mantengo tu estilo original para .logo-placeholder por si acaso, pero no se usa */
+.logo-placeholder {
+    width: 80px;
+    height: 80px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border-radius: 12px;
+}
+
+/* PANELES */
+.main-area {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.panel {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.panel h3 {
+    margin-top: 0;
+    color: #1e466e;
+}
+
+textarea {
+    width: 100%;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    resize: vertical;
+}
+
+button {
+    background: #1e466e;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 12px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #0f2b44;
+}
+
+pre {
+    background: #1e1e2f;
+    color: #f8f8f2;
+    padding: 12px;
+    border-radius: 12px;
+    overflow-x: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+}
+
+#outputArea {
+    background: #1e1e2f;
+    color: #f8f8f2;
+    min-height: 180px;
+}
+
+.analysis-single {
+    margin-bottom: 30px;
+}
+
+.card {
+    background: #f1f3f5;
+    border-radius: 20px;
+    padding: 15px;
+}
+
+.card h4 {
+    margin-top: 0;
+    color: #1e466e;
+}
+
+.lexical-detail {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.lexical-detail div {
+    flex: 1;
+    min-width: 200px;
+}
+
+.lexical-detail pre {
+    background: #2d2d3a;
+    font-size: 12px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.buttons-row {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background: white;
+    margin: 10% auto;
+    width: 400px;
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: red;
+}
+
+ul {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+    .main-area {
+        flex-direction: column;
+    }
+    .lexical-detail {
+        flex-direction: column;
+    }
+    header h1 {
+        font-size: 1.4rem;
+    }
+    .logo-img, .brazo-img {
+        width: 60px;
+        max-height: 60px;
+    }
+}
+/* Estilos para el constructor de instrucciones */
+.instruction-builder {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    align-items: center;
+}
+.instruction-builder select, 
+.instruction-builder input {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 0.9rem;
+    flex: 1;
+}
+.instruction-builder button {
+    margin-top: 0;
+    padding: 8px 16px;
+}
+.clear-btn {
+    background: #6c757d;
+}
+.clear-btn:hover {
+    background: #5a6268;
+}
