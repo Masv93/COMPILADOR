@@ -18,7 +18,6 @@ function analisislexico(sourceCode) {
         if (line === "") return;
         if (line.startsWith("#")) return;
 
-        // Separar por espacios
         const parts = line.split(/\s+/);
         let command, value;
 
@@ -32,7 +31,6 @@ function analisislexico(sourceCode) {
             value = parts[1];
         }
 
-        // Validar que la estructura sea correcta (2 o 3 partes según el comando)
         const expectedParts = (command.includes("GIRAR_")) ? 3 : 2;
         if (parts.length !== expectedParts) {
             errors.push({
@@ -43,7 +41,6 @@ function analisislexico(sourceCode) {
             return;
         }
 
-        // Validar comando
         if (!validCommands.includes(command)) {
             errors.push({
                 line: lineNumber,
@@ -53,7 +50,6 @@ function analisislexico(sourceCode) {
             return;
         }
 
-        // Validar que el valor sea numérico positivo
         if (!/^\d+$/.test(value)) {
             errors.push({
                 line: lineNumber,
@@ -63,17 +59,38 @@ function analisislexico(sourceCode) {
             return;
         }
 
-        const numValue = parseInt(value, 10);
+        const numericValue = parseInt(value, 10);
+
+        // Validaciones de rango
+        if (command === "AVANZAR" || command === "RETROCEDER") {
+            if (numericValue < 0 || numericValue > 400) {
+                errors.push({
+                    line: lineNumber,
+                    type: "ERROR_SEMANTICO",
+                    message: `${command} admite valores entre 0 y 400`
+                });
+                return;
+            }
+        } else if (command === "GIRAR_IZQUIERDA" || command === "GIRAR_DERECHA") {
+            if (numericValue < 0 || numericValue > 360) {
+                errors.push({
+                    line: lineNumber,
+                    type: "ERROR_SEMANTICO",
+                    message: `${command} admite valores entre 0 y 360`
+                });
+                return;
+            }
+        }
 
         tokens.push({
             type: command,
-            value: numValue,
+            value: numericValue,
             line: lineNumber
         });
 
         robotMoves.push({
             action: command,
-            value: numValue
+            value: numericValue
         });
     });
 
