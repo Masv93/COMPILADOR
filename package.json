@@ -1,0 +1,28 @@
+{
+  "name": "dise-o-de-un-compilador-de-lenguaje-dsl-para-control-rob-tico-en-esp32-usando-c-",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Masv93/DISE-O-DE-UN-COMPILADOR-DE-LENGUAJE-DSL-PARA-CONTROL-ROB-TICO-EN-ESP32-USANDO-C-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Masv93/DISE-O-DE-UN-COMPILADOR-DE-LENGUAJE-DSL-PARA-CONTROL-ROB-TICO-EN-ESP32-USANDO-C-/issues"
+  },
+  "homepage": "https://github.com/Masv93/DISE-O-DE-UN-COMPILADOR-DE-LENGUAJE-DSL-PARA-CONTROL-ROB-TICO-EN-ESP32-USANDO-C-#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
