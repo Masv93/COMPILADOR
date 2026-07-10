@@ -257,3 +257,30 @@ ul {
 .clear-btn:hover {
     background: #5a6268;
 }
+
+/* GRID DE ANÁLISIS (4 paneles) */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 10px;
+}
+.analysis-item {
+    background: #ffffffcc;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.analysis-item pre {
+    background: #2d2d3a;
+    font-size: 12px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+/* Responsive: en móviles una sola columna */
+@media (max-width: 800px) {
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+}

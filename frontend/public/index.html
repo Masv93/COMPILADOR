@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compilador DSL - Análisis Léxico</title>
-    <!-- Google Fonts para título elegante -->
+    <title>Compilador DSL - Análisis Léxico y Sintáctico</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,11 +15,9 @@
             <img src="/images/brazo.png" alt="Logo Brazo" class="brazo-img">
         </header>
 
-        <!-- Panel de entrada mejorado -->
         <div class="main-area">
             <div class="panel entrada">
                 <h3>📝 Entrada de instrucciones</h3>
-                <!-- Nuevo asistente para construir instrucciones -->
                 <div class="instruction-builder">
                     <select id="cmdSelect">
                         <option value="avanzar">AVANZAR</option>
@@ -29,32 +26,46 @@
                         <option value="girar izquierda">GIRAR_IZQUIERDA</option>
                     </select>
                     <input type="number" id="valueInput" placeholder="Valor" step="1" min="0" max="400">
-                    <button type="button" id="addInstructionBtn">➕ Agregar instrucción</button>
-                    <button type="button" id="clearInstructionsBtn" class="clear-btn">🗑️ Limpiar todo</button>
+                    <button type="button" id="addInstructionBtn">➕ Agregar</button>
+                    <button type="button" id="clearInstructionsBtn" class="clear-btn">🗑️ Limpiar</button>
                 </div>
                 <textarea id="codeInput" rows="6" placeholder="Aquí se irán agregando las instrucciones..."></textarea>
-                <button id="compileBtn">🔍 ANALIZAR (Léxico)</button>
+                <button id="compileBtn">🔍 ANALIZAR (Léxico + Sintáctico)</button>
             </div>
             <div class="panel salida">
-                <h3>📟 Salida de compilación (Léxico)</h3>
+                <h3>📟 Salida de compilación</h3>
                 <pre id="outputArea">Esperando análisis...</pre>
             </div>
         </div>
 
+        <!-- Nuevo grid de 4 paneles -->
         <div class="analysis-single">
             <div class="card full-width">
-                <h4>🔡 Análisis Léxico - Tokens y Errores</h4>
-                <div class="lexical-detail">
-                    <div><strong>Tokens:</strong> <pre id="tokensPre">-</pre></div>
-                    <div><strong>Errores léxicos:</strong> <pre id="errorsPre">-</pre></div>
-                    <div><strong>Movimientos (robotMoves):</strong> <pre id="movesPre">-</pre></div>
+                <h4>📊 Resultados del Análisis</h4>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <strong>🔡 Tokens (Léxico)</strong>
+                        <pre id="tokensPre">-</pre>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>📐 AST (Sintáctico)</strong>
+                        <pre id="astPre">-</pre>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>⚠️ Errores (Léxicos + Sintácticos)</strong>
+                        <pre id="errorsPre">-</pre>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>🤖 Movimientos (robotMoves)</strong>
+                        <pre id="movesPre">-</pre>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="buttons-row">
             <button id="commandsBtn">📋 Tabla de Comandos</button>
-            <button id="errorsBtn">⚠️ Tabla de Errores Léxicos</button>
+            <button id="errorsBtn">⚠️ Tabla de Errores</button>
             <button id="robotBtn">🤖 Ver movimiento del robot</button>
         </div>
 
@@ -69,16 +80,15 @@
         <div id="errorsModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h3>Posibles errores léxicos</h3>
+                <h3>Posibles errores</h3>
                 <ul id="errorsList"></ul>
             </div>
         </div>
     </div>
 
     <script src="script.js"></script>
-    <!-- Añadimos una pequeña mejora al script existente (se puede integrar en script.js) -->
     <script>
-        // Mejora para el builder de instrucciones
+        // Asistente de instrucciones
         const cmdSelect = document.getElementById('cmdSelect');
         const valueInput = document.getElementById('valueInput');
         const addBtn = document.getElementById('addInstructionBtn');
@@ -86,21 +96,15 @@
         const codeTextarea = document.getElementById('codeInput');
 
         addBtn.addEventListener('click', () => {
-            let command = cmdSelect.value;
+            const command = cmdSelect.value;
             const value = valueInput.value.trim();
             if (value === '' || isNaN(value) || value < 0) {
                 alert('Ingresa un valor numérico válido (0 o mayor).');
                 return;
             }
-            // Para girar derecha/izquierda, el valor se limita a 360 en el backend, aquí no es necesario.
             let instruction = `${command} ${value}`;
-            // Si ya hay contenido, agregamos nueva línea
-            if (codeTextarea.value.trim() !== '') {
-                codeTextarea.value += '\n' + instruction;
-            } else {
-                codeTextarea.value = instruction;
-            }
-            valueInput.value = '';   // limpiar valor para la siguiente
+            codeTextarea.value = codeTextarea.value.trim() ? codeTextarea.value + '\n' + instruction : instruction;
+            valueInput.value = '';
             valueInput.focus();
         });
 

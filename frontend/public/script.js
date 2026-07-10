@@ -2,6 +2,7 @@ const codeInput = document.getElementById('codeInput');
 const compileBtn = document.getElementById('compileBtn');
 const outputArea = document.getElementById('outputArea');
 const tokensPre = document.getElementById('tokensPre');
+const astPre = document.getElementById('astPre');
 const errorsPre = document.getElementById('errorsPre');
 const movesPre = document.getElementById('movesPre');
 
@@ -29,26 +30,26 @@ compileBtn.onclick = async () => {
         outputArea.textContent = '⚠️ Ingrese instrucciones.';
         return;
     }
-    outputArea.textContent = 'Analizando léxicamente...';
+    outputArea.textContent = 'Analizando léxico y sintáctico...';
     try {
-        const response = await fetch('/analizar', {
+        const response = await fetch('/compile-full', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ codigo })
         });
         const data = await response.json();
-        // Mostrar salida general
-        const hasErrors = data.errors && data.errors.length > 0;
-        if (hasErrors) {
-            outputArea.textContent = '❌ Se encontraron errores léxicos. Revisa el panel de errores.';
+        // Salida general
+        if (data.success) {
+            outputArea.textContent = '✅ Análisis completo exitoso. AST generado.';
         } else {
-            outputArea.textContent = '✅ Análisis léxico completado. Tokens generados correctamente.';
+            outputArea.textContent = '❌ Se encontraron errores. Revisa el panel de errores.';
         }
-        // Actualizar paneles
+        // Paneles
         tokensPre.textContent = JSON.stringify(data.tokens, null, 2);
-        errorsPre.textContent = data.errors.length ? JSON.stringify(data.errors, null, 2) : 'No hay errores';
+        astPre.textContent = JSON.stringify(data.ast, null, 2);
+        errorsPre.textContent = data.allErrors.length ? JSON.stringify(data.allErrors, null, 2) : '✅ Sin errores';
         movesPre.textContent = JSON.stringify(data.robotMoves, null, 2);
-        // Guardar movimientos en sessionStorage para la simulación del robot
+        // Guardar movimientos para simulación
         if (data.robotMoves) {
             sessionStorage.setItem('robotMoves', JSON.stringify(data.robotMoves));
         }
@@ -72,7 +73,7 @@ window.onclick = (e) => {
     if (e.target === errorsModal) errorsModal.style.display = 'none';
 };
 
-// Ver movimiento del robot (abrir nueva ventana con simulación)
+// Ver movimiento del robot
 document.getElementById('robotBtn').onclick = () => {
     window.open('robot.html', '_blank', 'width=900,height=700');
 };
