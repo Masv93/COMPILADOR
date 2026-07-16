@@ -11,9 +11,15 @@
     <div class="container">
         <header>
             <img src="/images/uvm.png" alt="Logo UVM" class="logo-img">
-            <h1>Análisis Léxico - DSL para Control Robótico</h1>
-            <img src="/images/brazo.png" alt="Logo Brazo" class="brazo-img">
+            <h1>DSL para Control Robótico</h1>
+            <img src="/images/car.png" alt="Logo Brazo" class="carro-img">
+            <h6 class="header-authors">Autores:
+                Francis Milyer Linares, 
+                Jesús David Berríos, 
+                Miguel Alfonso Suárez
+            </h6>
         </header>
+
 
         <div class="main-area">
             <div class="panel entrada">
@@ -30,8 +36,8 @@
                     <button type="button" id="clearInstructionsBtn" class="clear-btn">🗑️ Limpiar</button>
                 </div>
                 <textarea id="codeInput" rows="6" placeholder="Aquí se irán agregando las instrucciones..."></textarea>
-                <button id="compileBtn">🔍 ANALIZAR (Léxico + Sintáctico)</button>
             </div>
+            <button id="compileBtn">Compilar</button>
             <div class="panel salida">
                 <h3>📟 Salida de compilación</h3>
                 <pre id="outputArea">Esperando análisis...</pre>
@@ -41,25 +47,38 @@
         <!-- Nuevo grid de 4 paneles -->
         <div class="analysis-single">
             <div class="card full-width">
-                <h4>📊 Resultados del Análisis</h4>
+                <h4>📊 Resultados de Análisis</h4>
                 <div class="analysis-grid">
                     <div class="analysis-item">
-                        <strong>🔡 Tokens (Léxico)</strong>
+                        <strong>🔡 Análisis Léxico (Tokens)</strong>
                         <pre id="tokensPre">-</pre>
                     </div>
                     <div class="analysis-item">
-                        <strong>📐 AST (Sintáctico)</strong>
+                        <strong>📐 Análisis Sintáctico (AST)</strong>
                         <pre id="astPre">-</pre>
                     </div>
                     <div class="analysis-item">
-                        <strong>⚠️ Errores (Léxicos + Sintácticos)</strong>
-                        <pre id="errorsPre">-</pre>
-                    </div>
-                    <div class="analysis-item">
-                        <strong>🤖 Movimientos (robotMoves)</strong>
+                        <strong>🤖 Análisis Semántico (Movimientos)</strong>
                         <pre id="movesPre">-</pre>
                     </div>
                 </div>
+            <!-- 
+                <h4 style="margin-top: 25px;">📋 Registro de Errores</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <strong>⚠️ Errores Léxicos</strong>
+                            <pre id="lexicalErrorsPre">-</pre>
+                        </div>
+                        <div class="analysis-item">
+                            <strong>⚠️ Errores Sintácticos</strong>
+                            <pre id="syntacticErrorsPre">-</pre>
+                        </div>
+                        <div class="analysis-item">
+                            <strong>⚠️ Errores Semánticos</strong>
+                            <pre id="semanticErrorsPre">-</pre>
+                        </div>
+                    </div> 
+            -->
             </div>
         </div>
 
@@ -82,6 +101,13 @@
                 <span class="close">&times;</span>
                 <h3>Posibles errores</h3>
                 <ul id="errorsList"></ul>
+            </div>
+        </div>
+        <div id="robotModal" class="modal">
+            <div class="modal-content robot-modal-content">
+                <span class="close">&times;</span>
+                <h3>🤖 Simulación de Movimiento</h3>
+                <iframe id="robotFrame" src="about:blank" style="width: 100%; height: 75vh; border: none; border-radius: 12px;"></iframe>
             </div>
         </div>
     </div>

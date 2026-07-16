@@ -1,104 +1,157 @@
-function analisislexico(sourceCode) {
-    const tokens = [];
-    const errors = [];
-    const robotMoves = [];
+const TokenTypes = require('./tokenTypes');
+const Errors = require('./errors');
 
-    const lines = sourceCode.split("\n");
-    const validCommands = [
-        "AVANZAR",
-        "RETROCEDER",
-        "GIRAR_IZQUIERDA",
-        "GIRAR_DERECHA"
-    ];
+const KEYWORDS = {
+    "AVANZAR": TokenTypes.COMMAND,
+    "RETROCEDER": TokenTypes.COMMAND,
+    "GIRAR_DERECHA": TokenTypes.COMMAND,
+    "GIRAR_IZQUIERDA": TokenTypes.COMMAND,
+};
 
-    lines.forEach((line, index) => {
-        const lineNumber = index + 1;
-        line = line.trim();
+class Lexer {
+    constructor(sourceCode) {
+        this.source = sourceCode;
+        this.tokens = [];
+        this.errors = [];
+        this.start = 0;
+        this.current = 0;
+        this.line = 1;
+        this.startOfLine = 0;
+    }
 
-        if (line === "") return;
-        if (line.startsWith("#")) return;
+    scanTokens() {
+        while (!this.isAtEnd()) {
+            this.start = this.current;
+            this.scanToken();
+        }
+        this.tokens.push({
+            type: TokenTypes.EOF,
+            lexeme: "",
+            value: null,
+            line: this.line,
+            column: this.current - this.startOfLine + 1
+        });
+        return { tokens: this.tokens, errors: this.errors };
+    }
 
-        const parts = line.split(/\s+/);
-        let command, value;
+    isAtEnd() {
+        return this.current >= this.source.length;
+    }
 
-        // Detectar comando compuesto: "girar derecha" o "girar izquierda"
-        if (parts[0].toLowerCase() === "girar" && parts[1] && 
-            (parts[1].toLowerCase() === "derecha" || parts[1].toLowerCase() === "izquierda")) {
-            command = (parts[0] + "_" + parts[1]).toUpperCase();
-            value = parts[2];
+    scanToken() {
+        const char = this.advance();
+        switch (char) {
+            case ' ':
+            case '\r':
+            case '\t':
+                // Ignorar espacios en blanco
+                break;
+            case '\n':
+                this.line++;
+                this.startOfLine = this.current;
+                break;
+            case '#':
+                // Un comentario va hasta el final de la línea.
+                while (this.peek() !== '\n' && !this.isAtEnd()) this.advance();
+                break;
+            case '-':
+                if (this.isDigit(this.peek())) {
+                    this.number();
+                } else {
+                    this.addError(Errors.lexical.INVALID_CHARACTER, `Carácter inesperado: ${char}`);
+                }
+                break;
+            default:
+                if (this.isDigit(char)) {
+                    this.number();
+                } else if (this.isAlpha(char)) {
+                    this.identifier();
+                } else {
+                    this.addError(Errors.lexical.INVALID_CHARACTER, `Carácter inesperado: ${char}`);
+                }
+                break;
+        }
+    }
+
+    advance() {
+        this.current++;
+        return this.source.charAt(this.current - 1);
+    }
+
+    peek() {
+        if (this.isAtEnd()) return '\0';
+        return this.source.charAt(this.current);
+    }
+
+    addToken(type, value = null) {
+        const lexeme = this.source.substring(this.start, this.current);
+        this.tokens.push({
+            type,
+            lexeme,
+            value,
+            line: this.line,
+            column: this.start - this.startOfLine + 1
+        });
+    }
+
+    addError(code, message) {
+        this.errors.push({
+            code,
+            message,
+            line: this.line,
+            column: this.start - this.startOfLine + 1
+        });
+    }
+
+    number() {
+        while (this.isDigit(this.peek())) this.advance();
+
+        if (this.isAlpha(this.peek())) {
+            while (this.isAlphaNumeric(this.peek())) this.advance();
+            const badLexeme = this.source.substring(this.start, this.current);
+            this.addError(Errors.lexical.INVALID_NUMBER, `Número mal formado: ${badLexeme}`);
+            return;
+        }
+
+        const lexeme = this.source.substring(this.start, this.current);
+        this.addToken(TokenTypes.NUMBER, parseFloat(lexeme));
+    }
+
+    identifier() {
+        // Se simplifica el identificador. Ahora solo lee una palabra (que puede incluir '_')
+        // y la busca en las palabras reservadas. Se elimina la lógica compleja de lookahead
+        // para evitar ambigüedades.
+        while (this.isAlpha(this.peek())) {
+            this.advance();
+        }
+
+        const text = this.source.substring(this.start, this.current);
+        const upperText = text.toUpperCase();
+        const type = KEYWORDS[upperText];
+
+        if (type) {
+            this.addToken(type, upperText); // El valor es el propio comando
         } else {
-            command = parts[0].toUpperCase();
-            value = parts[1];
+            this.addError(Errors.lexical.UNKNOWN_COMMAND, `Comando desconocido: ${text}`);
         }
+    }
 
-        const expectedParts = (command.includes("GIRAR_")) ? 3 : 2;
-        if (parts.length !== expectedParts) {
-            errors.push({
-                line: lineNumber,
-                type: "ERROR_LEXICO",
-                message: "Formato de instrucción inválido"
-            });
-            return;
-        }
+    isDigit(char) {
+        return char >= '0' && char <= '9';
+    }
 
-        if (!validCommands.includes(command)) {
-            errors.push({
-                line: lineNumber,
-                type: "ERROR_LEXICO",
-                message: `Comando no reconocido: ${command}`
-            });
-            return;
-        }
+    isAlpha(char) {
+        return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_';
+    }
 
-        if (!/^\d+$/.test(value)) {
-            errors.push({
-                line: lineNumber,
-                type: "ERROR_LEXICO",
-                message: `Valor no numérico: ${value}`
-            });
-            return;
-        }
+    isAlphaNumeric(char) {
+        return this.isAlpha(char) || this.isDigit(char);
+    }
+}
 
-        const numericValue = parseInt(value, 10);
-
-        // Validaciones de rango
-        if (command === "AVANZAR" || command === "RETROCEDER") {
-            if (numericValue < 0 || numericValue > 400) {
-                errors.push({
-                    line: lineNumber,
-                    type: "ERROR_SEMANTICO",
-                    message: `${command} admite valores entre 0 y 400`
-                });
-                return;
-            }
-        } else if (command === "GIRAR_IZQUIERDA" || command === "GIRAR_DERECHA") {
-            if (numericValue < 0 || numericValue > 360) {
-                errors.push({
-                    line: lineNumber,
-                    type: "ERROR_SEMANTICO",
-                    message: `${command} admite valores entre 0 y 360`
-                });
-                return;
-            }
-        }
-
-        tokens.push({
-            type: command,
-            value: numericValue,
-            line: lineNumber
-        });
-
-        robotMoves.push({
-            action: command,
-            value: numericValue
-        });
-    });
-
-    return {
-        tokens,
-        errors,
-        robotMoves
-    };
+function analisislexico(sourceCode) {
+    const lexer = new Lexer(sourceCode);
+    return lexer.scanTokens();
 }
 
 module.exports = { analisislexico };

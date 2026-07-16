@@ -2,29 +2,36 @@ const express = require("express");
 const cors = require("cors");
 const { analisislexico } = require("./lexer");
 const parse = require("./parser");   // ← nuevo
+const { analyze } = require("./semantic"); // <-- nuevo
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("frontend/public"));
 
-// Endpoint completo (léxico + sintáctico)
+// Endpoint completo (léxico + sintáctico + semántico)
 app.post("/compile-full", (req, res) => {
     const sourceCode = req.body.codigo;
-    if (!sourceCode) {
-        return res.status(400).json({ error: "Falta el campo 'codigo'" });
+    if (typeof sourceCode !== 'string') {
+        return res.status(400).json({ error: "Falta el campo 'codigo' o no es un string" });
     }
 
     // 1. Análisis léxico
-    const lexResult = analisislexico(sourceCode);
-    const { tokens, errors: lexicalErrors, robotMoves } = lexResult;
+    const { tokens, errors: lexicalErrors } = analisislexico(sourceCode);
 
     // 2. Análisis sintáctico (AST)
-    const parserResult = parse(tokens);
-    const { ast, errors: syntacticErrors } = parserResult;
+    const { ast, errors: syntacticErrors } = parse(tokens);
 
-    // 3. Combinar errores
-    const allErrors = [...lexicalErrors, ...syntacticErrors];
+    // 3. Análisis Semántico
+    // Solo analizar si no hay errores previos para evitar resultados inconsistentes
+    let semanticResult = { robotMoves: [], errors: [] };
+    if (lexicalErrors.length === 0 && syntacticErrors.length === 0) {
+        semanticResult = analyze(ast);
+    }
+    const { robotMoves, errors: semanticErrors } = semanticResult;
+
+    // 4. Combinar errores
+    const allErrors = [...lexicalErrors, ...syntacticErrors, ...semanticErrors];
 
     res.json({
         tokens,
@@ -32,6 +39,7 @@ app.post("/compile-full", (req, res) => {
         robotMoves,
         ast,
         syntacticErrors,
+        semanticErrors,
         allErrors,
         success: allErrors.length === 0
     });
